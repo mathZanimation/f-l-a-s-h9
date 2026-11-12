@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Geometry</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; min-height: 100vh; background: #f5f7fb;
+           font: 16px/1.5 system-ui, Arial, sans-serif; }
+    main { width: min(100% - 24px, 760px); margin: 40px auto; }
+    .stage { width: 100%; aspect-ratio: 11 / 8; background: #fff;
+             border: 1px solid #ccd5e2; border-radius: 12px;
+             overflow: hidden; box-shadow: 0 8px 24px #15243b15; }
+    .stage ruffle-player { display: block; width: 100%; height: 100%; }
+    .notice { color: #4b5668; font-size: 14px; }
+  </style>
+  <script>
+    "use strict";
+    const APPROVED_ORIGINS = Object.freeze([
+      "https://ma7thlza7ni5ma5ti7o2n.github.io",
+      "https://ma7th1za7ni5ma5ti7o2n.github.io",
+	  "https://mathZanimation.github.io"
+    ]);
+
+    // Called synchronously by the SWF with Flash ExternalInterface.call().
+    // It reports the *embedding page's actual origin*, not the SWF URL.
+    // This function MUST exist before the movie starts.
+    window.swfHostOrigin = function () { return window.location.origin; };
+
+    // Access check in HTML as an early user-friendly restriction;
+    // the SWF independently repeats URL and actual page-origin checks.
+    window.swfHostApproved = APPROVED_ORIGINS.includes(window.location.origin);
+  </script>
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+</head>
+<body>
+  <main>
+    <h1>Interactive Geometry</h1>
+    <div class="stage" id="stage"></div>
+    <p class="notice" id="status" role="status"></p>
+  </main>
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const status = document.getElementById("status");
+      if (!window.swfHostApproved) {
+        status.textContent = "This interactive file is available only on approved school websites.";
+        return;
+      }
+      if (!window.RufflePlayer || !window.RufflePlayer.newest()) {
+        status.textContent = "The Flash emulator failed to load. Please refresh the page.";
+        return;
+      }
+      const player = window.RufflePlayer.newest().createPlayer();
+      document.getElementById("stage").appendChild(player);
+      player.ruffle().load({
+        url: "./geometry_protected.swf",
+        allowScriptAccess: true,
+        autoplay: "on"
+      }).catch(error => {
+        console.error("Error loading protected SWF", error);
+        status.textContent = "Unable to load the interactive geometry file.";
+      });
+    });
+  </script>
+</body>
+</html>
