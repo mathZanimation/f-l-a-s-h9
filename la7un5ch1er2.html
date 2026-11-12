@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101a30">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Volume of Revolution — Mobile & Tablet</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body { background: #0b1020; color: #f3f6ff; }
+    button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .app {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: max(12px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom));
+    }
+    .heading { margin: 0 0 10px; }
+    h1 { margin: 0 0 4px; font-size: clamp(18px, 4vw, 27px); line-height: 1.2; }
+    .subtitle { margin: 0; color: #bcc8e0; font-size: 13px; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .toolbar button {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 9px 12px;
+      border: 1px solid #405174;
+      border-radius: 10px;
+      color: #fff;
+      background: #253653;
+      font-weight: 650;
+    }
+    .toolbar button:focus-visible { outline: 3px solid #8bbdff; outline-offset: 2px; }
+    .toolbar button:active { background: #365781; }
+    .toolbar button:disabled { cursor: not-allowed; opacity: 0.4; }
+    .toolbar .primary { border-color: #327fff; background: #1862d8; }
+    .zoom-label { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .stage-scroll {
+      width: 100%;
+      max-height: min(68dvh, 700px);
+      min-height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: auto;
+      background: #05070d;
+      border: 1px solid #344565;
+      border-radius: 12px;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 940 / 515;
+      flex: none;
+      overflow: hidden;
+      background: #000;
+    }
+    .stage ruffle-player { display: block; width: 100%; height: 100%; }
+    .placeholder {
+      height: 100%;
+      min-height: 175px;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 10px;
+      padding: 20px;
+      text-align: center;
+      color: #d5e1ff;
+    }
+    .placeholder strong { font-size: clamp(15px, 3vw, 20px); }
+    .placeholder span { color: #a4b2d2; font-size: 13px; }
+    .status { min-height: 20px; margin: 9px 1px 0; color: #c2cce0; font-size: 13px; }
+    .hint { margin: 8px 1px 0; color: #a5b2cc; font-size: 13px; line-height: 1.5; }
+    .app:fullscreen, .app:-webkit-full-screen, body.focus-mode .app {
+      width: 100%; max-width: none; height: 100dvh; margin: 0;
+      padding: max(5px, env(safe-area-inset-top)) 6px max(5px, env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; background: #070b13;
+    }
+    .app:fullscreen .heading, .app:-webkit-full-screen .heading, body.focus-mode .heading,
+    .app:fullscreen .hint, .app:-webkit-full-screen .hint, body.focus-mode .hint { display: none; }
+    .app:fullscreen .toolbar, .app:-webkit-full-screen .toolbar, body.focus-mode .toolbar { flex: none; margin-bottom: 5px; gap: 5px; }
+    .app:fullscreen .stage-scroll, .app:-webkit-full-screen .stage-scroll, body.focus-mode .stage-scroll {
+      flex: 1; min-height: 0; max-height: none; border-radius: 5px;
+    }
+    .app:fullscreen .status, .app:-webkit-full-screen .status, body.focus-mode .status { flex: none; margin-top: 4px; }
+    @media (max-width: 600px) {
+      .toolbar { gap: 6px; }
+      .toolbar button { padding: 7px 9px; font-size: 13px; }
+      .subtitle { font-size: 12px; }
+      .hint { font-size: 12px; }
+    }
+    @media (orientation: landscape) and (max-height: 550px) {
+      .heading, .hint { display: none; }
+      .toolbar { margin-bottom: 5px; gap: 5px; }
+      .toolbar button { min-height: 38px; }
+      .stage-scroll { height: calc(100dvh - 105px); max-height: none; }
+    }
+  </style>
+  <script>
+    // Ruffle runs the existing SWF in modern browsers without an Adobe Flash plug-in.
+    window.RufflePlayer = window.RufflePlayer || {};
+    window.RufflePlayer.config = {
+      autoplay: "auto",
+      unmuteOverlay: "visible",
+      scale: "showAll",
+      quality: "high",
+      warnOnUnsupportedContent: true,
+      allowFullscreen: true,
+      showSwfDownload: false
+    };
+  </script>
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="heading">
+      <h1>Volume of Revolution</h1>
+      <p class="subtitle">Versi layar sentuh untuk Android, iPhone, tablet, dan iPad.</p>
+    </div>
+
+    <nav class="toolbar" aria-label="Kontrol animasi">
+      <button class="primary" id="playBtn" type="button">▶ Mulai</button>
+      <button id="restartBtn" type="button" disabled>↻ Ulang</button>
+      <button id="fullscreenBtn" type="button">⛶ Layar penuh</button>
+      <button id="landscapeBtn" type="button">↔ Landscape</button>
+      <button id="zoomOutBtn" type="button" aria-label="Perkecil tampilan">−</button>
+      <span class="zoom-label" id="zoomLabel" aria-live="polite">100%</span>
+      <button id="zoomInBtn" type="button" aria-label="Perbesar tampilan">+</button>
+      <button id="fitBtn" type="button">Sesuaikan</button>
+    </nav>
+
+    <section class="stage-scroll" id="stageScroll" aria-label="Area animasi interaktif">
+      <div class="stage" id="stage">
+        <div class="placeholder" id="placeholder">
+          <strong>Siap memainkan animasi</strong>
+          <span>Ketuk tombol “Mulai” untuk membuka file Flash dengan Ruffle.</span>
+        </div>
+      </div>
+    </section>
+
+    <p class="status" role="status" aria-live="polite" id="status">Untuk tampilan terbaik di HP, putar perangkat ke posisi horizontal (landscape).</p>
+    <p class="hint">Sentuh tombol dan objek di dalam animasi seperti menggunakan mouse. Gunakan tombol +/− bila tampilannya terlalu kecil. Di iPhone/iPad, jika rotasi otomatis tidak didukung, putar perangkat secara manual dan pastikan kunci orientasi dimatikan.</p>
+  </main>
+
+  <script>
+    "use strict";
+    const SWF_FILE = "./Vo1lu7m5e_R5ev7ol1ut7ion5.swf";
+    const SWF_RATIO = 940 / 515;
+    const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 2.5];
+    const el = (id) => document.getElementById(id);
+    const app = el("app");
+    const scrollArea = el("stageScroll");
+    const stage = el("stage");
+    let player = null;
+    let busy = false;
+    let zoom = 1;
+    let pseudoFullscreen = false;
+
+    function setStatus(message) { el("status").textContent = message; }
+
+    function inFullscreenMode() {
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement || pseudoFullscreen);
+    }
+
+    function resizeStage() {
+      const containerWidth = Math.max(240, scrollArea.clientWidth - 4);
+      let baseWidth = Math.min(940, containerWidth);
+      // In landscape/focus mode, fit the original 940x515 stage into screen height.
+      const compactLandscape = matchMedia("(orientation: landscape) and (max-height: 550px)").matches;
+      if (inFullscreenMode() || compactLandscape) {
+        const availableHeight = Math.max(130, scrollArea.clientHeight - 6);
+        baseWidth = Math.min(baseWidth, availableHeight * SWF_RATIO);
+      }
+      const width = Math.round(baseWidth * zoom);
+      stage.style.width = width + "px";
+      stage.style.height = Math.round(width / SWF_RATIO) + "px";
+      scrollArea.style.justifyContent = width <= scrollArea.clientWidth ? "center" : "flex-start";
+      el("zoomLabel").textContent = Math.round(zoom * 100) + "%";
+      el("zoomOutBtn").disabled = zoom <= ZOOM_LEVELS[0];
+      el("zoomInBtn").disabled = zoom >= ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+    }
+
+    async function loadMovie() {
+      if (busy) return;
+      if (!window.RufflePlayer || typeof window.RufflePlayer.newest !== "function") {
+        setStatus("Ruffle tidak berhasil dimuat. Pastikan internet aktif, lalu muat ulang halaman.");
+        return;
+      }
+      busy = true;
+      el("playBtn").disabled = true;
+      try {
+        if (!player) {
+          player = window.RufflePlayer.newest().createPlayer();
+          player.style.width = "100%";
+          player.style.height = "100%";
+          el("placeholder").replaceWith(player);
+        }
+        setStatus("Memuat animasi…");
+        await player.ruffle().load({ url: SWF_FILE });
+        el("restartBtn").disabled = false;
+        el("playBtn").textContent = "▶ Lanjut";
+        setStatus("Animasi siap. Ketuk kontrol di dalam animasi untuk berinteraksi.");
+      } catch (error) {
+        console.error("Gagal membuka SWF:", error);
+        setStatus("Animasi gagal dimuat. Periksa nama/lokasi file .swf dan koneksi internet.");
+      } finally {
+        busy = false;
+        el("playBtn").disabled = false;
+        resizeStage();
+      }
+    }
+
+    el("playBtn").addEventListener("click", async () => {
+      if (!player) { await loadMovie(); return; }
+      try { player.ruffle().play(); setStatus("Animasi berjalan."); }
+      catch { await loadMovie(); }
+    });
+    el("restartBtn").addEventListener("click", loadMovie);
+
+    async function toggleFullscreen() {
+      if (inFullscreenMode()) {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen().catch(() => {});
+        } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        pseudoFullscreen = false;
+        document.body.classList.remove("focus-mode");
+      } else {
+        let entered = false;
+        if (app.requestFullscreen) {
+          try { await app.requestFullscreen({ navigationUI: "hide" }); entered = true; }
+          catch (err) { console.info("Fullscreen API tidak tersedia:", err); }
+        }
+        if (!entered && app.webkitRequestFullscreen) {
+          try { app.webkitRequestFullscreen(); entered = true; }
+          catch (err) { console.info("WebKit fullscreen tidak tersedia:", err); }
+        }
+        if (!entered) {
+          pseudoFullscreen = true; // CSS fallback for Safari on iPhone/iPad.
+          document.body.classList.add("focus-mode");
+          window.scrollTo(0, 0);
+          setStatus("Mode fokus aktif. Browser perangkat ini membatasi fullscreen biasa.");
+        }
+      }
+      el("fullscreenBtn").textContent = inFullscreenMode() ? "✕ Tutup fokus" : "⛶ Layar penuh";
+      requestAnimationFrame(resizeStage);
+    }
+
+    el("fullscreenBtn").addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", () => {
+      el("fullscreenBtn").textContent = inFullscreenMode() ? "✕ Tutup fokus" : "⛶ Layar penuh";
+      requestAnimationFrame(resizeStage);
+    });
+    document.addEventListener("webkitfullscreenchange", () => requestAnimationFrame(resizeStage));
+
+    el("landscapeBtn").addEventListener("click", async () => {
+      // Orientation lock can work only in fullscreen on many Android browsers.
+      if (!inFullscreenMode()) await toggleFullscreen();
+      try {
+        if (!screen.orientation || typeof screen.orientation.lock !== "function") throw new Error("Unsupported");
+        await screen.orientation.lock("landscape");
+        setStatus("Mode landscape aktif.");
+      } catch {
+        setStatus("Rotasi otomatis tidak didukung browser ini. Putar HP/iPad secara manual dan nonaktifkan kunci rotasi jika perlu.");
+      }
+      requestAnimationFrame(resizeStage);
+    });
+
+    function changeZoom(direction) {
+      const index = ZOOM_LEVELS.indexOf(zoom);
+      const nextIndex = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, index + direction));
+      zoom = ZOOM_LEVELS[nextIndex];
+      resizeStage();
+    }
+    el("zoomOutBtn").addEventListener("click", () => changeZoom(-1));
+    el("zoomInBtn").addEventListener("click", () => changeZoom(1));
+    el("fitBtn").addEventListener("click", () => { zoom = 1; resizeStage(); });
+    window.addEventListener("resize", resizeStage, { passive: true });
+    window.addEventListener("orientationchange", () => setTimeout(resizeStage, 100));
+    resizeStage();
+  </script>
+</body>
+</html>
